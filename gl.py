@@ -1,7 +1,8 @@
-import random
 from math import cos, sin
-from obj import Obj, Texture
+from obj import Obj
 from lib import *
+from texture import Texture
+import random
 
 BLACK = color(0, 0, 0)
 WHITE = color(255, 255, 255)
@@ -50,6 +51,66 @@ class Render(object):
     except:
       pass
 
+  def shader(self, A,B,C,x,y):
+    if(y>0  and y<103):
+      return color(177, 147, 131)
+    if(y>103  and y<135 + random.randint(0,2)):
+      return color(75, 60, 171)
+    if(y>135 + random.randint(0,2)  and y<145 + random.randint(0,2)):
+      return color(243, 237, 61)
+    if(y>145 + random.randint(0,2)  and y<155 + random.randint(0,2)):
+      return color(219, 75, 23)
+    if(y>155 + random.randint(0,2)  and y<165 + random.randint(0,2)):
+      return color(243, 237, 61)
+    if(y>165  and y<172):
+      return color(219, 75, 23)
+    if(y>172  and y<300):
+      return color(177, 147, 131)
+
+
+  def triangleLucas(self):
+    A = next(self.active_vertex_array)
+    B = next(self.active_vertex_array)
+    C = next(self.active_vertex_array)
+
+    if self.active_texture:
+      tA = next(self.active_vertex_array)
+      tB = next(self.active_vertex_array)
+      tC = next(self.active_vertex_array)
+
+    nA = next(self.active_vertex_array)
+    nB = next(self.active_vertex_array)
+    nC = next(self.active_vertex_array)
+
+    bbox_min, bbox_max = bbox(A, B, C)
+
+    normal = norm(cross(sub(B, A), sub(C, A)))
+    intensity = dot(normal, self.light)
+    if intensity < 0:
+      return
+
+    for x in range(bbox_min.x, bbox_max.x + 1):
+      for y in range(bbox_min.y, bbox_max.y + 1):
+        w, v, u = barycentric(A, B, C, V2(x, y))
+        if w < 0 or v < 0 or u < 0:  
+          continue
+
+        if self.active_texture:
+          tx = tA.x * w + tB.x * v + tC.x * u
+          ty = tA.y * w + tB.y * v + tC.y * u
+
+        color = self.shader(A,B,C,x,y)
+
+
+        z = A.z * w + B.z * v + C.z * u
+
+        if x < 0 or y < 0:
+          continue
+
+        if x < len(self.zbuffer) and y < len(self.zbuffer[x]) and z > self.zbuffer[x][y]:
+          self.point(x, y, color)
+          self.zbuffer[x][y] = z
+
   def triangle(self):
     A = next(self.active_vertex_array)
     B = next(self.active_vertex_array)
@@ -83,6 +144,10 @@ class Render(object):
 
 
         color = self.active_texture.getColor(tx, ty, intensity)
+
+        if self.active_texture == None:
+          color = self.shader(A,B,C,x,y)
+
 
         z = A.z * w + B.z * v + C.z * u
 
@@ -222,6 +287,12 @@ class Render(object):
       try:
         while True:
           self.triangle()
+      except StopIteration:
+        pass
+    if polygon == 'LUCAS':
+      try:
+        while True:
+          self.triangleLucas()
       except StopIteration:
         pass
 
