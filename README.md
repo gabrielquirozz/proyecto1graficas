@@ -5,4 +5,4 @@ Los estudiantes deben entregar un software que lea archivos obj y realice un ren
 Escena recreada:
 
 
- ![Screenshot](gabriel.jpg)
+ ![Screenshot](gabriel2.jpg)
